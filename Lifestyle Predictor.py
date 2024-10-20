@@ -1,19 +1,10 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import KFold, cross_val_score
-
-# Initialize Flask app
-app = Flask(__name__)
-
-# Enable CORS
-CORS(app)
+from sklearn.model_selection import cross_val_score, KFold
 
 
-# Load the dataset and preprocess
 df = pd.read_csv('Lifestyle Data.csv')
 df = pd.get_dummies(df, columns=['Gender', 'Stress_Level'], drop_first=True)
 X = df.drop('Healthy_Lifestyle_Score', axis=1).values
@@ -21,7 +12,7 @@ y = df['Healthy_Lifestyle_Score'].values
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-# Define the RandomForest model function
+
 def RandomForest(X, y):
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
@@ -32,13 +23,10 @@ def RandomForest(X, y):
     model.fit(X, y)
     return model
 
-# Initialize the model
+
 rfmodel = RandomForest(X, y)
 
-# Create the Flask application
-app = Flask(__name__)
 
-# Define suggestion function (same as in your script)
 def give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi):
     suggestions = []
 
@@ -214,32 +202,27 @@ def give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, w
 
     return suggestions
 
-# Route for making predictions
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.json
 
+def get_user_input():
     try:
-        # Parse input data
-        age = float(data['age'])
-        gender = data['gender']
-        height = float(data['height'])
-        weight = float(data['weight'])
-        daily_steps = float(data['daily_steps'])
-        calories_consumed = float(data['calories_consumed'])
-        exercise_hours = float(data['exercise_hours'])
-        water_intake_liters = float(data['water_intake_liters'])
-        sleep_hours = float(data['sleep_hours'])
-        stress_level = data['stress_level']
+        age = float(input("Enter your age: "))
+        gender = input("Enter your gender (Male/Female): ").strip().capitalize()
+        height = float(input("Enter your height in cm: ").strip())
+        weight = float(input("Enter your weight in kg: ").strip())
+        daily_steps = float(input("Enter your daily steps: "))
+        calories_consumed = float(input("Enter calories consumed: "))
+        exercise_hours = float(input("Enter your exercise hours: "))
+        water_intake_liters = float(input("Enter water intake (liters): "))
+        sleep_hours = float(input("Enter your average sleep hours: "))
+        stress_level = input("Enter your stress level (Low/Medium/High): ").strip().capitalize()
 
-        bmi = weight / ((height / 100) * (height / 100))
+        bmi = weight / ((height/100) * (height/100))
 
-        # One-hot encoding for gender and stress level
+        # One-hot encoding of gender and stress level
         gender_male = 1 if gender == 'Male' else 0
         stress_level_medium = 1 if stress_level == 'Medium' else 0
         stress_level_high = 1 if stress_level == 'High' else 0
 
-        # Create DataFrame for the user's input
         user_df = pd.DataFrame({
             'Age': [age],
             'Daily_Steps': [daily_steps],
@@ -253,24 +236,30 @@ def predict():
             'Stress_Level_High': [stress_level_high]
         })
 
-        # Scale the input
         user_input = scaler.transform(user_df.values)
 
-        # Generate suggestions
         suggestions = give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi)
+        if suggestions:
+            print("\nHere are some lifestyle suggestions for you:")
+            for suggestion in suggestions:
+                print(f"- {suggestion}")
+        else:
+            print("\nYour lifestyle seems on track based on the input.")
 
-        # Predict healthy lifestyle score
-        prediction = rfmodel.predict(user_input)
-
-        # Return the response
-        return jsonify({
-            'predicted_score': float(prediction[0]),
-            'suggestions': suggestions
-        })
+        return user_input
 
     except ValueError as e:
-        return jsonify({'error': f'Invalid input: {e}'})
+        print(f"Input error: {e}")
+        return None
 
-# Run the app on port 4000
-if __name__ == '__main__':
-    app.run(port=4000, debug=True)
+
+def predict(user_input, model):
+    if user_input is not None:
+        prediction = model.predict(user_input)
+        print(f'Predicted Healthy Lifestyle Score: {prediction[0]:.2f}')
+    else:
+        print("No prediction due to invalid input.")
+
+
+user_input = get_user_input()
+predict(user_input, rfmodel)
