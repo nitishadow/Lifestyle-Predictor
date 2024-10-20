@@ -1,20 +1,44 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import joblib
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import KFold, cross_val_score
 
+# Initialize Flask app
 app = Flask(__name__)
+
+# Enable CORS
 CORS(app)
 
-# # Save the trained model and scaler
-# joblib.dump(rfmodel, 'model/model.pkl')
-# joblib.dump(scaler, 'model/scaler.pkl')
 
-# Load the saved model and scaler
-# model = joblib.load('model/model.pkl')
-# scaler = joblib.load('model/scaler.pkl')
+# Load the dataset and preprocess
+df = pd.read_csv('Lifestyle Data.csv')
+df = pd.get_dummies(df, columns=['Gender', 'Stress_Level'], drop_first=True)
+X = df.drop('Healthy_Lifestyle_Score', axis=1).values
+y = df['Healthy_Lifestyle_Score'].values
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
 
-# Suggestions logic (same as in your code)
+# Define the RandomForest model function
+def RandomForest(X, y):
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+    r2_scores = cross_val_score(model, X, y, cv=kf, scoring='r2')
+    print(f'Cross-validated R2 Score: {np.mean(r2_scores) * 100:.2f}%')
+
+    model.fit(X, y)
+    return model
+
+# Initialize the model
+rfmodel = RandomForest(X, y)
+
+# Create the Flask application
+app = Flask(__name__)
+
+# Define suggestion function (same as in your script)
 def give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi):
     suggestions = []
 
@@ -190,14 +214,13 @@ def give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, w
 
     return suggestions
 
-
+# Route for making predictions
 @app.route('/predict', methods=['POST'])
 def predict():
-    try:
-        # Get JSON data from the POST request
-        data = request.get_json()
+    data = request.json
 
-        # Extract user input
+    try:
+        # Parse input data
         age = float(data['age'])
         gender = data['gender']
         height = float(data['height'])
@@ -209,15 +232,14 @@ def predict():
         sleep_hours = float(data['sleep_hours'])
         stress_level = data['stress_level']
 
-        # Calculate BMI
-        bmi = weight / ((height / 100) ** 2)
+        bmi = weight / ((height / 100) * (height / 100))
 
-        # One-hot encoding of gender and stress level
+        # One-hot encoding for gender and stress level
         gender_male = 1 if gender == 'Male' else 0
         stress_level_medium = 1 if stress_level == 'Medium' else 0
         stress_level_high = 1 if stress_level == 'High' else 0
 
-        # Create DataFrame from input data
+        # Create DataFrame for the user's input
         user_df = pd.DataFrame({
             'Age': [age],
             'Daily_Steps': [daily_steps],
@@ -231,26 +253,24 @@ def predict():
             'Stress_Level_High': [stress_level_high]
         })
 
-        # Scale the input data
+        # Scale the input
         user_input = scaler.transform(user_df.values)
 
-        # Get predictions from the model
-        prediction = model.predict(user_input)
-
-        # Generate lifestyle suggestions
+        # Generate suggestions
         suggestions = give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi)
 
-        # Return response
+        # Predict healthy lifestyle score
+        prediction = rfmodel.predict(user_input)
+
+        # Return the response
         return jsonify({
-            'predicted_healthy_lifestyle_score': round(prediction[0], 2),
+            'predicted_score': float(prediction[0]),
             'suggestions': suggestions
         })
 
-    except Exception as e:
-        return jsonify({'error': str(e)})
+    except ValueError as e:
+        return jsonify({'error': f'Invalid input: {e}'})
 
-
-
-# Start the Flask application on port 4000
+# Run the app on port 4000
 if __name__ == '__main__':
     app.run(port=4000, debug=True)
