@@ -1,69 +1,223 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import numpy as np
+import joblib
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import KFold, cross_val_score
 
-# Initialize the Flask app
 app = Flask(__name__)
-
-# Enable CORS for all routes
 CORS(app)
 
-# Load and preprocess the data
-df = pd.read_csv('Lifestyle Data.csv')
-df = pd.get_dummies(df, columns=['Gender', 'Stress_Level'], drop_first=True)
-X = df.drop('Healthy_Lifestyle_Score', axis=1).values
-y = df['Healthy_Lifestyle_Score'].values
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
+# # Save the trained model and scaler
+# joblib.dump(rfmodel, 'model/model.pkl')
+# joblib.dump(scaler, 'model/scaler.pkl')
 
-# Function to train the model
-def RandomForest(X, y):
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+# Load the saved model and scaler
+# model = joblib.load('model/model.pkl')
+# scaler = joblib.load('model/scaler.pkl')
 
-    r2_scores = cross_val_score(model, X, y, cv=kf, scoring='r2')
-    print(f'Cross-validated R2 Score: {np.mean(r2_scores) * 100:.2f}%')
+# Suggestions logic (same as in your code)
+def give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi):
+    suggestions = []
 
-    model.fit(X, y)
-    return model
+    if gender == 'Male':
 
-# Train the model
-rfmodel = RandomForest(X, y)
+        if age < 30:
+            if daily_steps < 8800:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps > 8800:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (2400 <= calories_consumed <= 3000):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (2400 <= calories_consumed <= 3000):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 9):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 9):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule.")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append("It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
 
-# Endpoint for making predictions
+
+        elif 30 <= age <= 54:
+            if daily_steps < 5000:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps >= 5000:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (2200 <= calories_consumed <= 3000):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (2200 <= calories_consumed <= 3000):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 9):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 9):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append(
+                    "It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
+
+
+        elif age > 54:
+            if daily_steps < 6500:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps >= 6500:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (2000 <= calories_consumed <= 2600):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (2000 <= calories_consumed <= 2600):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 8):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 8):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule.")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append(
+                    "It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
+
+    elif gender == 'Female':
+
+        if age < 30:
+            if daily_steps < 8000:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps >= 8000:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (2000 <= calories_consumed <= 2300):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (2000 <= calories_consumed <= 2300):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 9):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 9):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append(
+                    "It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
+
+
+        elif 30 <= age <= 54:
+            if daily_steps < 5500:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps >= 5500:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (1800 <= calories_consumed <= 2100):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (1800 <= calories_consumed <= 2100):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 9):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 9):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule.")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append("It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
+
+
+        elif age > 54:
+            if daily_steps < 7000:
+                suggestions.append("Aim for a few extra steps—every little bit counts!")
+            if daily_steps >= 7000:
+                suggestions.append("You’re active, but a few more steps never hurt!")
+            if not (1800 <= calories_consumed <= 2100):
+                suggestions.append("Focus on balanced meals with more whole foods.")
+            if (1800 <= calories_consumed <= 2100):
+                suggestions.append("You’re fueling your body well—keep up the balanced diet.")
+            if not (7 <= sleep_hours <= 9):
+                suggestions.append("Work on a bedtime routine to improve your sleep quality.")
+            if (7 <= sleep_hours <= 9):
+                suggestions.append("Amazing! You are sticking to a regular sleep schedule.")
+            if water_intake_liters < 2.5:
+                suggestions.append("Drink more water—start with 6-8 glasses a day.")
+            if water_intake_liters >= 2.5:
+                suggestions.append("Fantastic! It is good to keep up with your hydration routine.")
+            if exercise_hours < 0.5:
+                suggestions.append("Try to start with 10-15 minutes of light activity each day.")
+            if exercise_hours >= 0.5:
+                suggestions.append("Great consistency! You can add variety to keep things exciting!")
+            if not (18.5 < bmi < 23):
+                suggestions.append("It’s time to work on balance—small adjustments in your diet and activity will help.")
+            if (18.5 < bmi < 23):
+                suggestions.append("You’re in a healthy range—keep maintaining it with your current routine.")
+
+    if stress_level == 'High':
+        suggestions.append("Why so Tensed? Consider stress-relief techniques like meditation or exercise.")
+
+    return suggestions
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Get the data from the POST request (JSON format expected)
-        data = request.json
+        # Get JSON data from the POST request
+        data = request.get_json()
 
-        # Extract the values from the input
+        # Extract user input
         age = float(data['age'])
-        gender = data['gender'].strip().capitalize()
+        gender = data['gender']
+        height = float(data['height'])
+        weight = float(data['weight'])
         daily_steps = float(data['daily_steps'])
         calories_consumed = float(data['calories_consumed'])
-        sleep_hours = float(data['sleep_hours'])
-        water_intake_liters = float(data['water_intake_liters'])
-        stress_level = data['stress_level'].strip().capitalize()
         exercise_hours = float(data['exercise_hours'])
-        bmi = float(data['bmi'])
+        water_intake_liters = float(data['water_intake_liters'])
+        sleep_hours = float(data['sleep_hours'])
+        stress_level = data['stress_level']
 
-        # Validate gender and stress level input
-        if gender not in ['Male', 'Female']:
-            return jsonify({"error": "Invalid gender input. Please enter 'Male' or 'Female'."}), 400
-        if stress_level not in ['Low', 'Medium', 'High']:
-            return jsonify({"error": "Invalid stress level input. Please enter 'Low', 'Medium', or 'High'."}), 400
+        # Calculate BMI
+        bmi = weight / ((height / 100) ** 2)
 
-        # One-hot encode categorical values
+        # One-hot encoding of gender and stress level
         gender_male = 1 if gender == 'Male' else 0
         stress_level_medium = 1 if stress_level == 'Medium' else 0
         stress_level_high = 1 if stress_level == 'High' else 0
 
-        # Create a DataFrame for the input
+        # Create DataFrame from input data
         user_df = pd.DataFrame({
             'Age': [age],
             'Daily_Steps': [daily_steps],
@@ -80,15 +234,23 @@ def predict():
         # Scale the input data
         user_input = scaler.transform(user_df.values)
 
-        # Make a prediction
-        prediction = rfmodel.predict(user_input)
+        # Get predictions from the model
+        prediction = model.predict(user_input)
 
-        # Return the prediction as a JSON response
-        return jsonify({"Predicted_Healthy_Lifestyle_Score": prediction[0]})
+        # Generate lifestyle suggestions
+        suggestions = give_suggestions(age, gender, daily_steps, calories_consumed, sleep_hours, water_intake_liters, stress_level, exercise_hours, bmi)
 
-    except ValueError as e:
-        return jsonify({"error": f"Input error: {str(e)}"}), 400
+        # Return response
+        return jsonify({
+            'predicted_healthy_lifestyle_score': round(prediction[0], 2),
+            'suggestions': suggestions
+        })
 
-# Run the app
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+
+# Start the Flask application on port 4000
 if __name__ == '__main__':
-    app.run(debug=True, port=4000)
+    app.run(port=4000, debug=True)
